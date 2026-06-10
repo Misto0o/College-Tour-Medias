@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="theme-elon bg-light">
+<body class="theme-elon bg-light d-flex flex-column min-vh-100">
 
     <header class="py-5 text-white shadow-sm transition-base">
         <div class="container">
@@ -22,10 +22,10 @@
         </div>
     </header>
 
-    <div class="container my-5">
+    <div class="container my-5 flex-grow-1">
 
         <nav class="college-tabs d-flex justify-content-center flex-wrap gap-2 mb-4">
-            <button class="btn tab-btn active px-4 py-2 rounded-pill fw-bold" data-college="elon">Elon
+            <button class="btn tab-btn px-4 py-2 rounded-pill fw-bold" data-college="elon" id="tab-elon">Elon
                 University</button>
             <button class="btn tab-btn locked px-4 py-2 rounded-pill fw-bold" data-college="app_state"
                 id="tab-app">Appalachian State 🔒</button>
@@ -37,9 +37,11 @@
             <div class="card border-0 shadow-sm p-4 mb-4 text-center">
                 <div id="dropZone"
                     class="drop-zone border border-2 border-dashed rounded-3 py-5 px-3 bg-white cursor-pointer transition-base">
-                    <div class="fs-1 mb-2">📷</div>
-                    <p class="fs-5 fw-semibold text-secondary mb-1">Tap to choose photos</p>
-                    <p class="small text-muted mb-0">or drag & drop them here</p>
+                    <div id="dropZoneContent">
+                        <div class="fs-1 mb-2">📷</div>
+                        <p class="fs-5 fw-semibold text-secondary mb-1">Tap to choose photos</p>
+                        <p class="small text-muted mb-0">or drag & drop them here</p>
+                    </div>
                     <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
                 </div>
 
@@ -60,11 +62,9 @@
 
         <section id="gallerySection" class="card border-0 shadow-sm p-4 mb-5 text-center" style="display: none;">
             <h2 id="galleryTitle" class="h3 fw-bold mb-4 text-start border-bottom pb-2">Elon Gallery</h2>
-
             <div class="sushi-wrap position-relative overflow-hidden mx-auto my-3" id="sushiWrap">
                 <div class="sushi-track d-flex transition-base" id="sushiTrack"></div>
             </div>
-
             <div class="carousel-controls d-flex justify-content-center align-items-center gap-3 mt-4">
                 <button id="prevBtn" class="btn btn-outline-secondary rounded-circle shadow-sm px-3 py-2">◀</button>
                 <span id="slideCounter" class="badge bg-dark px-3 py-2 fs-6 rounded-pill fw-semibold"></span>
@@ -87,8 +87,10 @@
 
     </div>
 
-    <footer class="py-4 bg-white border-top text-muted mt-5">
-        <p class="small mb-0">BuiltByKristian for SEO Scholars · 2026</p>
+    <footer class="py-4 bg-white border-top text-muted mt-auto text-center">
+        <div class="container">
+            <p class="small mb-0">BuiltByKristian for SEO Scholars · 2026</p>
+        </div>
     </footer>
 
     <div id="toast"

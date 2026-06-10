@@ -1,11 +1,11 @@
 // ────────────── CONFIGURATION ──────────────
 const SUPABASE_URL = "https://btydbatrvzjycxhrlzmd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0eWRiYXRydnpqeWN4aHJsem1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMzM5NzUsImV4cCI6MjA5NjYwOTk3NX0.pi_yaYWIGkFYmOBJ_oLEs05gr3K3waY9zvu2HsVVkQk";
-// THAT IS PUBLIC KEY, SAFE FOR FRONTEND USAGE. ONLY HAS STORAGE PERMISSIONS FOR THE DESIGNATED BUCKET, AND READ/WRITE ACCESS TO IT. NO OTHER DATABASE OR AUTH CAPABILITIES ARE GRANTED.
-const BUCKET = "college-trip-photos"; // Make sure this bucket is public in Supabase
+const BUCKET = "college-trip-photos";
 
 let supabaseClient;
 
+// Trip Schedules
 const TRIP_TIMELINE = {
     elon: new Date("2026-06-16"),
     app_state: new Date("2026-06-17"),
@@ -26,7 +26,6 @@ const targetText = document.getElementById('current-upload-target');
 
 // Initialize State
 document.addEventListener("DOMContentLoaded", () => {
-    // 2. Initialize the client safely here after the CDN has completely loaded
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     checkTimelineLocks();
@@ -34,37 +33,131 @@ document.addEventListener("DOMContentLoaded", () => {
     loadGallery();
 });
 
-// Unlocks folders systematically on schedule
+// Systematically locks/unlocks access windows across timelines
 function checkTimelineLocks() {
     const today = new Date();
-    // Normalize time for fair comparison
-    today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0); // Normalize time for clear date comparisons
 
+    // ─── ELON TIMELINE CHECK ───
+    if (today < TRIP_TIMELINE.elon) {
+        document.getElementById('tab-elon').classList.add('locked');
+        document.getElementById('tab-elon').innerText = "Elon University 🔒";
+    } else {
+        document.getElementById('tab-elon').classList.remove('locked');
+        document.getElementById('tab-elon').innerText = "Elon University";
+    }
+
+    // ─── APP STATE TIMELINE CHECK ───
     if (today >= TRIP_TIMELINE.app_state) {
         document.getElementById('tab-app').classList.remove('locked');
         document.getElementById('tab-app').innerText = "Appalachian State";
+    } else {
+        document.getElementById('tab-app').classList.add('locked');
+        document.getElementById('tab-app').innerText = "Appalachian State 🔒";
     }
+
+    // ─── UNC TIMELINE CHECK ───
     if (today >= TRIP_TIMELINE.unc) {
         document.getElementById('tab-unc').classList.remove('locked');
         document.getElementById('tab-unc').innerText = "UNC Chapel Hill";
+    } else {
+        document.getElementById('tab-unc').classList.add('locked');
+        document.getElementById('tab-unc').innerText = "UNC Chapel Hill 🔒";
+    }
+
+    // Update upload window state based on active selections
+    updateDropZoneLockState();
+}
+
+// Controls dropzone interactivity and messages depending on target status
+function updateDropZoneLockState() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const targetReleaseDate = TRIP_TIMELINE[currentCollege];
+    const isLocked = today < targetReleaseDate;
+    const dropZoneContent = document.getElementById('dropZoneContent');
+
+    if (isLocked) {
+        dropZone.classList.add('locked-zone');
+
+        // ─── THE FIX: Completely lock the file input element ───
+        fileInput.disabled = true;
+
+        selectedFiles = [];
+        uploadBtn.style.display = 'none';
+        fileInput.value = '';
+
+        const formattedDate = targetReleaseDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        });
+        dropZoneContent.innerHTML = `
+            <div class="fs-1 mb-2">🔒</div>
+            <p class="fs-5 fw-semibold text-danger mb-1">Folder Locked</p>
+            <p class="small text-muted mb-0">Uploads unlock on schedule: <strong>${formattedDate}</strong></p>
+        `;
+    } else {
+        dropZone.classList.remove('locked-zone');
+
+        // ─── THE FIX: Re-enable the file input element when unlocked ───
+        fileInput.disabled = false;
+
+        dropZoneContent.innerHTML = `
+            <div class="fs-1 mb-2">📷</div>
+            <p class="fs-5 fw-semibold text-secondary mb-1">Tap to choose photos</p>
+            <p class="small text-muted mb-0">or drag & drop them here</p>
+        `;
     }
 }
 
-// Handle switching views
+// Intercepts click handler triggers if user attempts interaction on a locked dropzone
+dropZone.addEventListener('click', (e) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (today < TRIP_TIMELINE[currentCollege]) {
+        showToast("This college folder is currently locked!");
+        return;
+    }
+    fileInput.click();
+});
+
+// Update standard listener actions to respect active timeline locks
+dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (today >= TRIP_TIMELINE[currentCollege]) {
+        dropZone.classList.add('drag-over');
+    }
+});
+
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (today < TRIP_TIMELINE[currentCollege]) {
+        showToast("This folder is locked!");
+        return;
+    }
+
+    selectedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    uploadBtn.style.display = selectedFiles.length ? 'inline-block' : 'none';
+});
+
+// Handle view switching tabs cleanly
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-        if (e.target.classList.contains('locked')) {
-            showToast("This college block unlocks on trip schedule!");
-            return;
-        }
+        // Remove class restrictions so advisors/users can view pre-existing gallery data
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
 
         currentCollege = e.target.dataset.college;
-        targetText.textContent = e.target.innerText;
-        document.getElementById('galleryTitle').innerText = `${e.target.innerText} Gallery`;
+        targetText.textContent = e.target.innerText.replace(' 🔒', '');
+        document.getElementById('galleryTitle').innerText = `${targetText.textContent} Gallery`;
 
         switchTheme(currentCollege);
+        updateDropZoneLockState();
         loadGallery();
     });
 });

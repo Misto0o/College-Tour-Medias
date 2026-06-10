@@ -128,3 +128,12 @@ button#uploadBtn:hover {
 .cursor-pointer {
     cursor: pointer;
 }
+
+.drop-zone.locked-zone {
+    border-color: #dc3545 !important;
+    /* Crimson Lock Warning Border */
+    background-color: #f8d7da !important;
+    /* Soft Red warning tint */
+    cursor: not-allowed !important;
+    opacity: 0.8;
+}

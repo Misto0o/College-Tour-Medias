@@ -1,6 +1,7 @@
 // ────────────── CONFIGURATION ──────────────
 const SUPABASE_URL = "https://btydbatrvzjycxhrlzmd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0eWRiYXRydnpqeWN4aHJsem1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMzM5NzUsImV4cCI6MjA5NjYwOTk3NX0.pi_yaYWIGkFYmOBJ_oLEs05gr3K3waY9zvu2HsVVkQk";
+// THIS IS A PUBLIC KEY WITH RESTRICTED ANON ACCESS TO ONLY THE STORAGE BUCKET. NO OTHER DB OR AUTH PERMISSIONS ARE GRANTED. SAFE FOR CLIENT-SIDE USAGE.
 const BUCKET = "college-trip-photos";
 
 let supabaseClient;
@@ -10,6 +11,13 @@ const TRIP_TIMELINE = {
     elon: new Date("2026-06-16"),
     app_state: new Date("2026-06-17"),
     unc: new Date("2026-06-18")
+    // All colleges unlock simultaneously on the day of the trip to encourage real-time sharing and excitement! Adjust dates as needed for staggered access.
+};
+
+const COLLEGE_NAMES = {
+    elon: "Elon University",
+    app_state: "Appalachian State",
+    unc: "UNC Chapel Hill"
 };
 
 let currentCollege = "elon";
@@ -36,39 +44,57 @@ document.addEventListener("DOMContentLoaded", () => {
 // Systematically locks/unlocks access windows across timelines
 function checkTimelineLocks() {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize time for clear date comparisons
+    today.setHours(0, 0, 0, 0);
 
-    // ─── ELON TIMELINE CHECK ───
-    if (today < TRIP_TIMELINE.elon) {
-        document.getElementById('tab-elon').classList.add('locked');
-        document.getElementById('tab-elon').innerText = "Elon University 🔒";
-    } else {
-        document.getElementById('tab-elon').classList.remove('locked');
-        document.getElementById('tab-elon').innerText = "Elon University";
+    const colleges = [
+        {
+            key: "elon",
+            id: "tab-elon",
+            label: "Elon University"
+        },
+        {
+            key: "app_state",
+            id: "tab-app",
+            label: "Appalachian State"
+        },
+        {
+            key: "unc",
+            id: "tab-unc",
+            label: "UNC Chapel Hill"
+        }
+    ];
+
+    for (let i = 0; i < colleges.length; i++) {
+        const college = colleges[i];
+        const btn = document.getElementById(college.id);
+
+        const unlockDate = TRIP_TIMELINE[college.key];
+
+        if (today < unlockDate) {
+            // Future
+            btn.classList.add("locked");
+            btn.innerText = `${college.label} 🔒`;
+        } else {
+
+            const nextCollege = colleges[i + 1];
+
+            if (
+                nextCollege &&
+                today >= TRIP_TIMELINE[nextCollege.key]
+            ) {
+                // Completed
+                btn.classList.remove("locked");
+                btn.innerText = `${college.label} ✅`;
+            } else {
+                // Current stop
+                btn.classList.remove("locked");
+                btn.innerText = `${college.label} 📸`;
+            }
+        }
     }
 
-    // ─── APP STATE TIMELINE CHECK ───
-    if (today >= TRIP_TIMELINE.app_state) {
-        document.getElementById('tab-app').classList.remove('locked');
-        document.getElementById('tab-app').innerText = "Appalachian State";
-    } else {
-        document.getElementById('tab-app').classList.add('locked');
-        document.getElementById('tab-app').innerText = "Appalachian State 🔒";
-    }
-
-    // ─── UNC TIMELINE CHECK ───
-    if (today >= TRIP_TIMELINE.unc) {
-        document.getElementById('tab-unc').classList.remove('locked');
-        document.getElementById('tab-unc').innerText = "UNC Chapel Hill";
-    } else {
-        document.getElementById('tab-unc').classList.add('locked');
-        document.getElementById('tab-unc').innerText = "UNC Chapel Hill 🔒";
-    }
-
-    // Update upload window state based on active selections
     updateDropZoneLockState();
 }
-
 // Controls dropzone interactivity and messages depending on target status
 function updateDropZoneLockState() {
     const today = new Date();
@@ -153,8 +179,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         e.target.classList.add('active');
 
         currentCollege = e.target.dataset.college;
-        targetText.textContent = e.target.innerText.replace(' 🔒', '');
-        document.getElementById('galleryTitle').innerText = `${targetText.textContent} Gallery`;
+        const cleanName = COLLEGE_NAMES[currentCollege];
+
+        targetText.textContent = cleanName;
+        document.getElementById('galleryTitle').innerText =
+            `${cleanName} Gallery`;
 
         switchTheme(currentCollege);
         updateDropZoneLockState();

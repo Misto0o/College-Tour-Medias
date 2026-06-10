@@ -12,9 +12,9 @@ body.theme-elon {
 }
 
 body.theme-app_state {
-    --primary-color: #111111;
+    --primary-color: #ffcc00;
     /* Sleek Off-Black */
-    --accent-color: #ffcc00;
+    --accent-color: #000000;
     /* App State Gold */
 }
 

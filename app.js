@@ -8,10 +8,10 @@ let supabaseClient;
 
 // Trip Schedules
 const TRIP_TIMELINE = {
-    elon: new Date("2026-06-16"),
-    app_state: new Date("2026-06-17"),
-    unc: new Date("2026-06-18")
-    // All colleges unlock simultaneously on the day of the trip to encourage real-time sharing and excitement! Adjust dates as needed for staggered access.
+    elon: new Date(2026, 5, 16),
+    app_state: new Date(2026, 5, 17),
+    unc: new Date(2026, 5, 18)
+    //Dates will unlock at 12:00 AM on the scheduled day (local time) to ensure fairness across time zones. Adjust month index as needed (0-based).
 };
 
 const COLLEGE_NAMES = {
